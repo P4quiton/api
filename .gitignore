@@ -1,0 +1,24 @@
+# Archivos de entorno
+.env
+.env.*
+
+# Configuración local sensible
+config/database.local.php
+
+# Logs
+*.log
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# IDE
+.vscode/
+.idea/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Dependencias
+vendor/
