@@ -10,6 +10,7 @@ class AuthResource
     private $db;
     private $apiUser;
     private $apiToken;
+    private $tokenExpirationMinutes;
 
     public function __construct()
     {
@@ -18,6 +19,7 @@ class AuthResource
 
         $this->apiUser = new ApiUser($this->db);
         $this->apiToken = new ApiToken($this->db);
+        $this->tokenExpirationMinutes = $database->getConfig('token_expiration_minutes', 60);
     }
 
     public function login()
@@ -60,10 +62,10 @@ class AuthResource
         // Token aleatorio de 32 bytes = 64 caracteres hex
         $token = bin2hex(random_bytes(32));
 
-        // Expira en 60 minutos
+        // Tiempo de expiracion
         $expiresAt = date(
             "Y-m-d H:i:s",
-            strtotime("+60 minutes")
+            strtotime("+" . $this->tokenExpirationMinutes . " minutes")
         );
 
         $created = $this->apiToken->create(
@@ -94,17 +96,11 @@ class AuthResource
 
     public function logout()
     {
+        header("Content-Type: application/json");
 
         $authUser = AuthMiddleware::validate();
 
-        $query = "UPDATE api_tokens
-                SET revoked = TRUE
-                WHERE token = :token";
-
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(":token", $authUser["token"]);
-
-        if ($stmt->execute()) {
+        if ($this->apiToken->revokeByToken($authUser["token"])) {
             http_response_code(200);
 
             echo json_encode([

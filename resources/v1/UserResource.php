@@ -1,7 +1,7 @@
 <?php
 
-require_once '../config/database.php';
-require_once '../models/User.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../models/User.php';
 
 class UserResource
 {
@@ -15,7 +15,6 @@ class UserResource
         $this->user = new User($this->db);
     }
 
-    // GET /api/v1/users
     // GET /api/v1/users
     public function index()
     {
@@ -62,7 +61,6 @@ class UserResource
     }
 
     // POST /api/v1/users
-    // POST /api/v1/users
     public function store()
     {
         header("Content-Type: application/json");
@@ -100,7 +98,6 @@ class UserResource
     }
 
     // PUT /api/v1/users/{id}
-    // PUT /api/v1/users/{id}
     public function update($id)
     {
         header("Content-Type: application/json");
@@ -132,7 +129,6 @@ class UserResource
         }
     }
 
-    // DELETE /api/v1/users/{id}
     // DELETE /api/v1/users/{id}
     public function destroy($id)
     {

@@ -37,4 +37,40 @@ class ApiToken
 
         return $stmt->execute();
     }
+
+    public function revokeByToken($token)
+    {
+        $query = "UPDATE " . $this->table_name . "
+                SET revoked = TRUE
+                WHERE token = :token";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":token", $token);
+
+        return $stmt->execute();
+    }
+
+    public function findWithUser($token)
+    {
+        $query = "SELECT
+                    t.id AS token_id,
+                    t.user_id,
+                    t.token,
+                    t.expires_at,
+                    t.revoked,
+                    u.username,
+                    u.email,
+                    u.status
+                FROM " . $this->table_name . " t
+                INNER JOIN api_users u
+                    ON t.user_id = u.id
+                WHERE t.token = :token
+                LIMIT 1";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":token", $token);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 }

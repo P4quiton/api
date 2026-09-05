@@ -4,5 +4,7 @@ return [
     'host' => 'localhost',
     'db_name' => 'tap',
     'username' => 'root',
-    'password' => ''
+    'password' => '',
+
+    'token_expiration_minutes' => 60
 ];

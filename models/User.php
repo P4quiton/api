@@ -16,30 +16,30 @@ class User
     }
 
     public function create()
-{
-    $query = "INSERT INTO " . $this->table_name . "
-              SET nombre = :nombre,
-                  email = :email,
-                  password = :password";
+    {
+        $query = "INSERT INTO " . $this->table_name . "
+                SET nombre = :nombre,
+                    email = :email,
+                    password = :password";
 
-    $stmt = $this->conn->prepare($query);
+        $stmt = $this->conn->prepare($query);
 
-    $this->nombre = htmlspecialchars(strip_tags($this->nombre));
-    $this->email = htmlspecialchars(strip_tags($this->email));
+        $this->nombre = htmlspecialchars(strip_tags($this->nombre));
+        $this->email = htmlspecialchars(strip_tags($this->email));
 
-    $passwordHash = password_hash($this->password, PASSWORD_DEFAULT);
+        $passwordHash = password_hash($this->password, PASSWORD_DEFAULT);
 
-    $stmt->bindParam(":nombre", $this->nombre);
-    $stmt->bindParam(":email", $this->email);
-    $stmt->bindParam(":password", $passwordHash);
+        $stmt->bindParam(":nombre", $this->nombre);
+        $stmt->bindParam(":email", $this->email);
+        $stmt->bindParam(":password", $passwordHash);
 
-    if ($stmt->execute()) {
-        $this->id = $this->conn->lastInsertId();
-        return true;
+        if ($stmt->execute()) {
+            $this->id = $this->conn->lastInsertId();
+            return true;
+        }
+
+        return false;
     }
-
-    return false;
-}
 
     public function read()
     {

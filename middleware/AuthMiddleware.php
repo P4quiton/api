@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../models/ApiToken.php';
 
 class AuthMiddleware
 {
@@ -17,7 +18,8 @@ class AuthMiddleware
             self::unauthorized();
         }
 
-        $authorization = $headers["Authorization"]
+        $authorization =
+            $headers["Authorization"]
             ?? $headers["authorization"];
 
         if (!preg_match('/Bearer\s(\S+)/', $authorization, $matches)) {
@@ -29,26 +31,9 @@ class AuthMiddleware
         $database = new Database();
         $db = $database->getConnection();
 
-        $query = "SELECT
-                    t.id AS token_id,
-                    t.user_id,
-                    t.token,
-                    t.expires_at,
-                    t.revoked,
-                    u.username,
-                    u.email,
-                    u.status
-                  FROM api_tokens t
-                  INNER JOIN api_users u
-                    ON t.user_id = u.id
-                  WHERE t.token = :token
-                  LIMIT 1";
+        $apiToken = new ApiToken($db);
 
-        $stmt = $db->prepare($query);
-        $stmt->bindParam(":token", $token);
-        $stmt->execute();
-
-        $auth = $stmt->fetch(PDO::FETCH_ASSOC);
+        $auth = $apiToken->findWithUser($token);
 
         if (!$auth) {
             self::unauthorized();

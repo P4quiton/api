@@ -1,73 +1,66 @@
 <?php
 
-require_once '../config/database.php';
-require_once '../models/User.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../models/ApiUser.php';
 require_once __DIR__ . '/../../middleware/AuthMiddleware.php';
 
 class UserResourceV2
 {
     private $db;
-    private $user;
+    private $apiUser;
 
     public function __construct()
     {
         $database = new Database();
         $this->db = $database->getConnection();
-        $this->user = new User($this->db);
+        $this->apiUser = new ApiUser($this->db);
     }
 
-    // GET /api/v1/users
-    // GET /api/v1/users
+    // GET /api/v2/users
     public function index()
     {
         $authUser = AuthMiddleware::validate();
 
         header("Content-Type: application/json");
 
-        $stmt = $this->user->read();
+        $stmt = $this->apiUser->read();
 
-        $users_arr = array();
-        $users_arr["records"] = array();
+        $users = [];
 
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $user_item = array(
-                "id" => $row["id"],
-                "nombre" => $row["nombre"],
-                "email" => $row["email"],
-                "fecha_registro" => $row["fecha_registro"]
-            );
-
-            array_push($users_arr["records"], $user_item);
+            $users[] = $row;
         }
 
         http_response_code(200);
-        echo json_encode($users_arr);
+
+        echo json_encode([
+            "records" => $users
+        ]);
     }
 
-    // GET /api/v1/users/{id}
+    // GET /api/v2/users/{id}
     public function show($id)
     {
         $authUser = AuthMiddleware::validate();
 
         header("Content-Type: application/json");
 
-        $this->user->id = $id;
-
-        $usuario = $this->user->readOne();
+        $usuario = $this->apiUser->readOne($id);
 
         if ($usuario) {
             http_response_code(200);
             echo json_encode($usuario);
-        } else {
-            http_response_code(404);
-            echo json_encode(array(
-                "message" => "Usuario no encontrado"
-            ));
+            return;
         }
+
+        http_response_code(404);
+
+        echo json_encode([
+            "message" => "Usuario API no encontrado"
+        ]);
     }
 
-    // POST /api/v1/users
-    // POST /api/v1/users
+    // POST /api/v2/users
     public function store()
     {
         $authUser = AuthMiddleware::validate();
@@ -77,37 +70,65 @@ class UserResourceV2
         $data = json_decode(file_get_contents("php://input"));
 
         if (
-            !empty($data->nombre) &&
-            !empty($data->email) &&
-            !empty($data->password)
+            empty($data->username) ||
+            empty($data->email) ||
+            empty($data->password)
         ) {
-            $this->user->nombre = $data->nombre;
-            $this->user->email = $data->email;
-            $this->user->password = $data->password;
+            http_response_code(400);
 
-            if ($this->user->create()) {
+            echo json_encode([
+                "message" => "Datos incompletos"
+            ]);
+
+            return;
+        }
+
+        $status = $data->status ?? "ACTIVE";
+
+        if (!in_array($status, ["ACTIVE", "INACTIVE"])) {
+            http_response_code(400);
+
+            echo json_encode([
+                "message" => "Status inválido"
+            ]);
+
+            return;
+        }
+
+        try {
+            $created = $this->apiUser->create(
+                $data->username,
+                $data->email,
+                $data->password,
+                $status
+            );
+
+            if ($created) {
                 http_response_code(201);
 
-                echo json_encode(array(
-                    "message" => "Usuario creado exitosamente",
-                    "id" => $this->user->id
-                ));
-            } else {
-                http_response_code(503);
-                echo json_encode(array(
-                    "message" => "No se pudo crear el usuario"
-                ));
+                echo json_encode([
+                    "message" => "Usuario API creado exitosamente"
+                ]);
+
+                return;
             }
-        } else {
-            http_response_code(400);
-            echo json_encode(array(
-                "message" => "Datos incompletos"
-            ));
+
+            http_response_code(500);
+
+            echo json_encode([
+                "message" => "No se pudo crear el usuario"
+            ]);
+
+        } catch (PDOException $e) {
+            http_response_code(409);
+
+            echo json_encode([
+                "message" => "El username o email ya existe"
+            ]);
         }
     }
 
-    // PUT /api/v1/users/{id}
-    // PUT /api/v1/users/{id}
+    // PUT /api/v2/users/{id}
     public function update($id)
     {
         $authUser = AuthMiddleware::validate();
@@ -116,52 +137,97 @@ class UserResourceV2
 
         $data = json_decode(file_get_contents("php://input"));
 
-        $this->user->id = $id;
-
-        if (!empty($data->nombre) && !empty($data->email)) {
-            $this->user->nombre = $data->nombre;
-            $this->user->email = $data->email;
-
-            if ($this->user->update()) {
-                http_response_code(200);
-                echo json_encode(array(
-                    "message" => "Usuario actualizado exitosamente"
-                ));
-            } else {
-                http_response_code(503);
-                echo json_encode(array(
-                    "message" => "No se pudo actualizar el usuario"
-                ));
-            }
-        } else {
+        if (
+            empty($data->username) ||
+            empty($data->email) ||
+            empty($data->status)
+        ) {
             http_response_code(400);
-            echo json_encode(array(
+
+            echo json_encode([
                 "message" => "Datos incompletos"
-            ));
+            ]);
+
+            return;
+        }
+
+        if (!in_array($data->status, ["ACTIVE", "INACTIVE"])) {
+            http_response_code(400);
+
+            echo json_encode([
+                "message" => "Status inválido"
+            ]);
+
+            return;
+        }
+
+        try {
+            $updated = $this->apiUser->update(
+                $id,
+                $data->username,
+                $data->email,
+                $data->status
+            );
+
+            if ($updated) {
+                http_response_code(200);
+
+                echo json_encode([
+                    "message" => "Usuario API actualizado exitosamente"
+                ]);
+
+                return;
+            }
+
+            http_response_code(500);
+
+            echo json_encode([
+                "message" => "No se pudo actualizar el usuario"
+            ]);
+
+        } catch (PDOException $e) {
+            http_response_code(409);
+
+            echo json_encode([
+                "message" => "El username o email ya existe"
+            ]);
         }
     }
 
-    // DELETE /api/v1/users/{id}
-    // DELETE /api/v1/users/{id}
+    // DELETE /api/v2/users/{id}
     public function destroy($id)
     {
         $authUser = AuthMiddleware::validate();
-        
+
         header("Content-Type: application/json");
 
-        $this->user->id = $id;
+        $usuario = $this->apiUser->readOne($id);
 
-        if ($this->user->delete()) {
-            http_response_code(200);
-            echo json_encode(array(
-                "message" => "Usuario eliminado exitosamente"
-            ));
-        } else {
-            http_response_code(503);
-            echo json_encode(array(
-                "message" => "No se pudo eliminar el usuario"
-            ));
+        if (!$usuario) {
+            http_response_code(404);
+
+            echo json_encode([
+                "message" => "Usuario API no encontrado"
+            ]);
+
+            return;
         }
+
+        if ($this->apiUser->delete($id)) {
+            http_response_code(200);
+
+            echo json_encode([
+                "message" => "Usuario API eliminado exitosamente"
+            ]);
+
+            return;
+        }
+
+        http_response_code(500);
+
+        echo json_encode([
+            "message" => "No se pudo eliminar el usuario"
+        ]);
     }
 }
 ?>

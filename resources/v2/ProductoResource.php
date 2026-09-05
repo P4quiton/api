@@ -1,7 +1,7 @@
 <?php
 
-require_once '../config/database.php';
-require_once '../models/Producto.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../models/Producto.php';
 require_once __DIR__ . '/../../middleware/AuthMiddleware.php';
 
 
@@ -17,10 +17,12 @@ class ProductoResourceV2
         $this->producto = new Producto($this->db);
     }
 
-    // GET /api/v1/productos
+    // GET /api/v2/productos
     public function index()
     {
         $authUser = AuthMiddleware::validate();
+
+        header("Content-Type: application/json");
 
         $stmt = $this->producto->read();
 
@@ -34,10 +36,12 @@ class ProductoResourceV2
         echo json_encode($productos);
     }
 
-    // GET /api/v1/productos/{id}
+    // GET /api/v2/productos/{id}
     public function show($id)
     {
         $authUser = AuthMiddleware::validate();
+
+        header("Content-Type: application/json");
 
         $this->producto->id = $id;
 
@@ -54,10 +58,12 @@ class ProductoResourceV2
         }
     }
 
-    // POST /api/v1/productos
+    // POST /api/v2/productos
     public function store()
     {
         $authUser = AuthMiddleware::validate();
+        
+        header("Content-Type: application/json");
 
         $data = json_decode(file_get_contents("php://input"));
 
@@ -95,10 +101,12 @@ class ProductoResourceV2
         }
     }
 
-    // PUT /api/v1/productos/{id}
+    // PUT /api/v2/productos/{id}
     public function update($id)
     {
         $authUser = AuthMiddleware::validate();
+
+        header("Content-Type: application/json");
 
         $data = json_decode(file_get_contents("php://input"));
 
@@ -134,10 +142,12 @@ class ProductoResourceV2
         }
     }
 
-    // DELETE /api/v1/productos/{id}
+    // DELETE /api/v2/productos/{id}
     public function destroy($id)
     {
         $authUser = AuthMiddleware::validate();
+
+        header("Content-Type: application/json");
 
         $this->producto->id = $id;
 

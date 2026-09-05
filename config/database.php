@@ -6,6 +6,7 @@ class Database
     private $db_name;
     private $username;
     private $password;
+    private $config;
 
     public $conn;
 
@@ -17,12 +18,12 @@ class Database
             die("Falta el archivo de configuración de base de datos.");
         }
 
-        $config = require $configFile;
+        $this->config = require $configFile;
 
-        $this->host = $config['host'];
-        $this->db_name = $config['db_name'];
-        $this->username = $config['username'];
-        $this->password = $config['password'];
+        $this->host = $this->config['host'];
+        $this->db_name = $this->config['db_name'];
+        $this->username = $this->config['username'];
+        $this->password = $this->config['password'];
     }
 
     public function getConnection()
@@ -43,5 +44,10 @@ class Database
         }
 
         return $this->conn;
+    }
+
+    public function getConfig($key, $default = null)
+    {
+        return $this->config[$key] ?? $default;
     }
 }
