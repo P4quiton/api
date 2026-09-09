@@ -4,12 +4,38 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
 require_once __DIR__ . '/../core/Router.php';
 
 $scriptName = dirname($_SERVER['SCRIPT_NAME']);
 $basePath = $scriptName;
 
 $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+// ========================================
+// API V3
+// ========================================
+
+if (strpos($requestUri, '/api/v3/') !== false) {
+
+    require_once __DIR__ . '/../resources/v3/TareaResource.php';
+
+    $router = new Router('v3', $basePath);
+
+    $tareaResource = new TareaResource();
+
+    $router->addRoute('GET', '/tareas', [$tareaResource, 'index']);
+    $router->addRoute('GET', '/tareas/{id}', [$tareaResource, 'show']);
+    $router->addRoute('POST', '/tareas', [$tareaResource, 'store']);
+    $router->addRoute('PUT', '/tareas/{id}', [$tareaResource, 'update']);
+
+    $router->dispatch();
+    exit;
+}
 
 // ========================================
 // API V2

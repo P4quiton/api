@@ -1,0 +1,131 @@
+openapi: 3.0.3
+
+info:
+  title: API de Gestión de Tareas
+  description: >
+    API REST v3 para gestionar tareas.
+    Este contrato fue diseñado siguiendo el enfoque API-First.
+  version: 3.0.0
+
+servers:
+  - url: http://localhost/api/public/api/v3
+    description: Servidor local
+
+paths:
+
+  /tareas:
+    get:
+      summary: Obtener todas las tareas
+      operationId: obtenerTareas
+      responses:
+        '200':
+          description: Lista de tareas obtenida correctamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tarea'
+
+    post:
+      summary: Crear una nueva tarea
+      operationId: crearTarea
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NuevaTarea'
+      responses:
+        '201':
+          description: Tarea creada correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tarea'
+        '400':
+          description: Datos incompletos o inválidos
+
+  /tareas/{id}:
+    get:
+      summary: Obtener una tarea por ID
+      operationId: obtenerTareaPorId
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la tarea
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Tarea encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tarea'
+        '404':
+          description: Tarea no encontrada
+
+    put:
+      summary: Actualizar una tarea existente
+      operationId: actualizarTarea
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la tarea
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NuevaTarea'
+      responses:
+        '200':
+          description: Tarea actualizada correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tarea'
+        '400':
+          description: Datos incompletos o inválidos
+        '404':
+          description: Tarea no encontrada
+
+components:
+  schemas:
+
+    Tarea:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        titulo:
+          type: string
+          example: Estudiar API-First
+        completada:
+          type: boolean
+          example: false
+        fecha_creacion:
+          type: string
+          format: date-time
+          example: '2026-09-07T10:00:00Z'
+
+    NuevaTarea:
+      type: object
+      required:
+        - titulo
+        - completada
+      properties:
+        titulo:
+          type: string
+          example: Estudiar API-First
+        completada:
+          type: boolean
+          example: false

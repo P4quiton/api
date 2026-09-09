@@ -22,3 +22,6 @@ Thumbs.db
 
 # Dependencias
 vendor/
+
+# Dependencias de Node.js
+node_modules/
