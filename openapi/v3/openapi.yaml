@@ -11,6 +11,9 @@ servers:
   - url: http://localhost/api/public/api/v3
     description: Servidor local
 
+  - url: http://topicosweb.celaya.tecnm.mx/21030466/api/public/api/v3
+    description: Servidor de producción
+
 paths:
 
   /tareas:
